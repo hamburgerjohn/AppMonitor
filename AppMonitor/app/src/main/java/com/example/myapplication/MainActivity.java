@@ -21,13 +21,13 @@ public class MainActivity extends AppCompatActivity implements Serializable {
 
     private Utility util;
     private ArrayList<CardLayout> cards = new ArrayList<>();
-    private ArrayList<String> cards_clicked;
+    private ArrayList<String> cards_clicked = new ArrayList<>();
+    private ArrayList<String> cards_clicke;
 
     @Override
     protected void onStart(){
         super.onStart();
         Button b_auth = (Button) findViewById(R.id.b_auth);
-        util = new Utility(this);
         if(!util.GetGrantStatus()){
             b_auth.setEnabled(true);
             b_auth.setVisibility(View.VISIBLE);
@@ -38,14 +38,26 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         else{
             b_auth.setEnabled(false);
             b_auth.setVisibility(View.INVISIBLE);
+            util.UpdatePackages();
+            initData();
         }
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        util = new Utility(this);
 
-        cards_clicked = (ArrayList<String>) getIntent().getSerializableExtra("Cards");
+        cards_clicke = (ArrayList<String>) getIntent().getSerializableExtra("Cards");
+        if(cards_clicke != null){
+            for(int i = 0; i < cards_clicke.size(); i++){
+                cards_clicked.add(cards_clicke.get(i));
+            }
+            for(int i = 0; i < cards_clicked.size(); i++){
+                Log.d("String", cards_clicked.get(i));
+            }
+        }
+
 
         Button b_add = (Button) findViewById(R.id.b_add);
         b_add.setOnClickListener(v->{
@@ -76,13 +88,13 @@ public class MainActivity extends AppCompatActivity implements Serializable {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.refresh) {
-            //util.Reset();
+            util.Reset();
             return true;
         }
         if(id == R.id.display){
             //util.Reset();
-            cards.clear();
             util.SetRunningApplications();
+            util.UpdatePackages();
             initData();
             return true;
         }
@@ -101,7 +113,7 @@ public class MainActivity extends AppCompatActivity implements Serializable {
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         layoutManager.setOrientation(RecyclerView.VERTICAL);
         recyclerView.setLayoutManager(layoutManager);
-        RecyclerViewAdapter adapter = new RecyclerViewAdapter(cards, this);
+        RecyclerViewAdapter adapter = new RecyclerViewAdapter(cards);
         recyclerView.setAdapter(adapter);
         adapter.notifyDataSetChanged();
     }

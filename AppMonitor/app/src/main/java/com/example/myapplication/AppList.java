@@ -62,7 +62,7 @@ public class AppList extends AppCompatActivity{
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.refresh) {
-            util.Reset();
+           // util.Reset();
             cards.clear();
             util.SetRunningApplications();
             initData();
@@ -84,7 +84,7 @@ public class AppList extends AppCompatActivity{
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         layoutManager.setOrientation(RecyclerView.VERTICAL);
         recyclerView.setLayoutManager(layoutManager);
-        adapter = new RecyclerViewAdapter(cards, this);
+        adapter = new RecyclerViewAdapter(cards);
         recyclerView.setAdapter(adapter);
         adapter.notifyDataSetChanged();
     }

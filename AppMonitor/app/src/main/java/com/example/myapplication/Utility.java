@@ -26,42 +26,71 @@ import java.util.TreeMap;
 
 public class Utility extends AppCompatActivity {
 
-    private Context main_act;
-    private UsageStatsManager stats_mgr;
-    private ActivityManager act_mgr;
-    private List<ActivityManager.RunningAppProcessInfo> tasks;
+    private final Context main_act;
     private final List<AppContainer> app_rec;
-    private List<UsageStats> app_list;
     private SortedMap<Long, UsageStats> sorted_map;
 
     public Utility(Context main_act) {
         this.main_act = main_act;
         this.app_rec = new ArrayList<>();
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            InitPackages();
-        }else{
-            act_mgr = (ActivityManager)main_act.getSystemService(Context.ACTIVITY_SERVICE);
-            tasks = act_mgr.getRunningAppProcesses();
-        }
+//        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//            InitPackages();
+//        }else{
+//            act_mgr = (ActivityManager)main_act.getSystemService(Context.ACTIVITY_SERVICE);
+//            tasks = act_mgr.getRunningAppProcesses();
+//        }
     }
     @SuppressLint("NewApi")
     private void InitPackages(){
-        this.stats_mgr = (UsageStatsManager)main_act.getSystemService(USAGE_STATS_SERVICE);
-        this.app_list = stats_mgr.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, System.currentTimeMillis() - 1000*3600*24, System.currentTimeMillis());
-        this.sorted_map = new TreeMap<Long, UsageStats>();
+        UsageStatsManager stats_mgr = (UsageStatsManager) main_act.getSystemService(USAGE_STATS_SERVICE);
+        List<UsageStats> app_list = stats_mgr.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, System.currentTimeMillis() - 1000 * 3600 * 1, System.currentTimeMillis());
+
         if(app_list != null && app_list.size() > 0) {
+            this.sorted_map = new TreeMap<Long, UsageStats>();
             for (UsageStats usage_stats : app_list) {
-                sorted_map.put(usage_stats.getTotalTimeVisible(), usage_stats);
+                sorted_map.put(usage_stats.getTotalTimeInForeground(), usage_stats);
+            }
+        }
+    }
+
+    @SuppressLint("NewApi")
+    public void SetRunningApplications(){
+        InitPackages();
+        app_rec.clear();
+        ArrayList<String> this_is_so_bad = new ArrayList<>();
+
+        if(sorted_map != null && !sorted_map.isEmpty()){
+            for(SortedMap.Entry<Long,UsageStats> entry : sorted_map.entrySet()){
+                if(!this_is_so_bad.contains(entry.getValue().getPackageName())){
+                    app_rec.add(new AppContainer(entry.getValue().getPackageName(),entry.getKey()));
+                    this_is_so_bad.add(entry.getValue().getPackageName());
+                }
+
+            }
+        }
+        this_is_so_bad.clear();
+
+    }
+
+    public void UpdatePackages(){
+        InitPackages();
+        for(SortedMap.Entry<Long,UsageStats> entry : sorted_map.entrySet()){
+            for(int i = 0; i < app_rec.size(); i++){
+                if(app_rec.get(i).GetName().contentEquals(entry.getValue().getPackageName())){
+                    app_rec.get(i).SetFinalTime(entry.getKey());
+                }
+
             }
         }
     }
 
     public ArrayList<CardLayout> GetAllPackages(ArrayList<CardLayout> cards, ArrayList<String> cards_clicked){
+        cards.clear();
+
         for(int i = 0; i < app_rec.size(); i++){
             if(cards_clicked != null){
                 if(cards_clicked.contains(app_rec.get(i).GetName()))
                 {
-                    Log.d("Final Time", "-------------------"+app_rec.get(i).GetFinalTime() + "---------------------------");
                     cards.add(new CardLayout(FormatAppName(app_rec.get(i).GetName()), app_rec.get(i).GetName(), ""+app_rec.get(i).GetTimeSec()+"s", RetrieveIcons(app_rec.get(i).GetName())));
                 }
 
@@ -71,26 +100,6 @@ public class Utility extends AppCompatActivity {
                 cards.add(new CardLayout(FormatAppName(app_rec.get(i).GetName()), app_rec.get(i).GetName(), ""+app_rec.get(i).GetTimeSec()+"s", RetrieveIcons(app_rec.get(i).GetName())));
         }
         return cards;
-    }
-
-    @SuppressLint("NewApi")
-    public void SetRunningApplications(){
-        InitPackages();
-        if(sorted_map != null && !sorted_map.isEmpty()){
-            for(SortedMap.Entry<Long,UsageStats> entry : sorted_map.entrySet()){
-                boolean exist = false;
-                for(int i = 0; i < app_rec.size(); i++){
-                    if(app_rec.get(i).GetName().contentEquals(entry.getValue().getPackageName())){
-                        app_rec.get(i).SetFinalTime(entry.getKey());
-                        exist = true;
-                        break;
-                    }
-
-                }
-                if(!exist)
-                    app_rec.add(new AppContainer(entry.getValue().getPackageName(),entry.getKey()));
-            }
-        }
     }
 
     public boolean GetGrantStatus(){
@@ -128,8 +137,14 @@ public class Utility extends AppCompatActivity {
     }
 
     public void Reset(){
-        app_rec.clear();
+        for(int i = 0; i < app_rec.size(); i++)
+        {
+            app_rec.get(i).SetInitTime(app_rec.get(i).GetFinalTime());
+        }
     }
+
+
+
 
 
 }

@@ -24,11 +24,10 @@ import java.util.List;
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder>{
     private final ArrayList<CardLayout> cards;
     private final ArrayList<String> cards_clicked;
-    private final Context context;
 
 
-    public RecyclerViewAdapter(ArrayList<CardLayout> cards, Context context){
-        this.context = context;
+
+    public RecyclerViewAdapter(ArrayList<CardLayout> cards){
         this.cards = cards;
         this.cards_clicked = new ArrayList<>();
     }
@@ -81,7 +80,8 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
             image.setImageDrawable(icon);
             application_name.setText(name);
-            application_time.setText(time);
+            if(!(Long.parseLong(time.substring(0, time.length() -1))<0))
+                application_time.setText(time);
         }
 
     }
